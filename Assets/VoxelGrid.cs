@@ -5,14 +5,15 @@ using UnityEngine;
 [SelectionBase]
 public class VoxelGrid : MonoBehaviour {
 
-    public int resolution;
+    public int resolution = 8;
     public GameObject voxelPrefab;
 
     private bool[] voxels;
     private float voxelSize;
 
-    private void Awake() {
-        voxelSize = 1f / resolution;
+    public void Initialize(int resolution, float size) {
+        this.resolution = resolution;
+        voxelSize = size / resolution;
         voxels = new bool[resolution * resolution];
         for (int i = 0, y = 0; y < resolution; ++y) {
             for (int x = 0; x < resolution; ++x, ++i) {
