@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[SelectionBase]
 public class VoxelGrid : MonoBehaviour {
 
     public int resolution;
@@ -24,6 +25,6 @@ public class VoxelGrid : MonoBehaviour {
         GameObject o = Instantiate(voxelPrefab) as GameObject;
         o.transform.parent = transform;
         o.transform.localPosition = new Vector3((x + 0.5f) * voxelSize, (y + 0.5f) * voxelSize);
-        o.transform.localScale = Vector3.one * voxelSize;
+        o.transform.localScale = Vector3.one * voxelSize * 0.9f;
     }
 }
