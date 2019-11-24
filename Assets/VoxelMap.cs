@@ -54,6 +54,10 @@ public class VoxelMap : MonoBehaviour {
     private void EditVoxels(Vector3 point) {
         int voxelX = (int)((point.x + halfSize) / voxelSize);
         int voxelY = (int)((point.y + halfSize) / voxelSize);
-        Debug.Log(voxelX + ", " + voxelY);
+        int chunkX = voxelX / voxelResolution;
+        int chunkY = voxelY / voxelResolution;
+        voxelX -= chunkX * voxelResolution;
+        voxelY -= chunkY * voxelResolution;
+        chunks[chunkY * chunkResolution + chunkX].SetVoxel(voxelX, voxelY, true);
     }
 }
