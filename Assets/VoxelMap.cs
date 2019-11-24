@@ -58,6 +58,7 @@ public class VoxelMap : MonoBehaviour {
         int chunkY = voxelY / voxelResolution;
         voxelX -= chunkX * voxelResolution;
         voxelY -= chunkY * voxelResolution;
-        chunks[chunkY * chunkResolution + chunkX].SetVoxel(voxelX, voxelY, true);
+        VoxelStencil activeStencil = new VoxelStencil();
+        chunks[chunkY * chunkResolution + chunkX].SetVoxel(voxelX, voxelY, activeStencil);
     }
 }
