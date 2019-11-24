@@ -26,13 +26,34 @@ public class VoxelMap : MonoBehaviour {
                 CreateChunk(i, x, y);
             }
         }
+
+        BoxCollider box = gameObject.AddComponent<BoxCollider>();
+        box.size = new Vector3(size, size);
     }
 
-    private void CreateChunk (int i , int x, int y) {
+    private void Update() {
+        if (Input.GetMouseButton(0)) {
+            RaycastHit hitInfo;
+
+            if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hitInfo)) {
+                if (hitInfo.collider.gameObject == gameObject) {
+                    EditVoxels(transform.InverseTransformPoint(hitInfo.point));
+                }
+            }
+        }
+    }
+
+    private void CreateChunk(int i , int x, int y) {
         VoxelGrid chunk = Instantiate(voxelGridPrefab) as VoxelGrid;
         chunk.Initialize(voxelResolution, chunkSize);
         chunk.transform.parent = transform;
         chunk.transform.localPosition = new Vector3(x * chunkSize - halfSize, y * chunkSize - halfSize);
         chunks[i] = chunk;
+    }
+
+    private void EditVoxels(Vector3 point) {
+        int voxelX = (int)((point.x + halfSize) / voxelSize);
+        int voxelY = (int)((point.y + halfSize) / voxelSize);
+        Debug.Log(voxelX + ", " + voxelY);
     }
 }

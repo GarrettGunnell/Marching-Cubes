@@ -294,7 +294,7 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1820115868
+--- !u!1 &1689158157
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -302,37 +302,39 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1820115870}
-  - component: {fileID: 1820115869}
+  - component: {fileID: 1689158159}
+  - component: {fileID: 1689158158}
   m_Layer: 0
-  m_Name: Voxel Grid
+  m_Name: Voxel Map
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1820115869
+--- !u!114 &1689158158
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1820115868}
+  m_GameObject: {fileID: 1689158157}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b87efc501b1ed4c4bbc4cc846b8e5873, type: 3}
+  m_Script: {fileID: 11500000, guid: 3c68bc8aaa28ca940b2fa328fc3841d7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  resolution: 8
-  voxelPrefab: {fileID: 4988706912884057670, guid: a91170aec34375b4887669afe4a6f22f,
+  size: 2
+  voxelResolution: 8
+  chunkResolution: 2
+  voxelGridPrefab: {fileID: 6533841261492154675, guid: 14e17aceb5f03154e9c1f2722e6b2f10,
     type: 3}
---- !u!4 &1820115870
+--- !u!4 &1689158159
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1820115868}
+  m_GameObject: {fileID: 1689158157}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
