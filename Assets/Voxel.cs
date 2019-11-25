@@ -2,7 +2,7 @@
 using UnityEngine;
 
 [Serializable]
-public class Voxel : MonoBehaviour {
+public class Voxel {
 
     public bool state;
 
