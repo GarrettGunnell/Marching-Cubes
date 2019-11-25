@@ -31,7 +31,7 @@ public class VoxelGrid : MonoBehaviour {
         SetVoxelColors();
     }
 
-    private void CreateVoxel (int i, int x, int y) {
+    private void CreateVoxel(int i, int x, int y) {
         GameObject o = Instantiate(voxelPrefab) as GameObject;
         o.transform.parent = transform;
         o.transform.localPosition = new Vector3((x + 0.5f) * voxelSize, (y + 0.5f) * voxelSize);
