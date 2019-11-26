@@ -16,6 +16,8 @@ public class VoxelGrid : MonoBehaviour {
     private Voxel[] voxels;
     private Material[] voxelMaterials;
     private float voxelSize, gridSize;
+    private int[] rowCacheMin, rowCacheMax;
+    private int edgeCacheMin, edgeCacheMax;
 
     private Voxel dummyX, dummyY, dummyT;
 
@@ -40,6 +42,8 @@ public class VoxelGrid : MonoBehaviour {
         mesh.name = "VoxelGrid Mesh";
         vertices = new List<Vector3>();
         triangles = new List<int>();
+        rowCacheMax = new int[resolution * 2 + 1];
+        rowCacheMin = new int[resolution * 2 + 1];
         Refresh();
     }
 
@@ -84,6 +88,7 @@ public class VoxelGrid : MonoBehaviour {
             dummyX.BecomeXDummyOf(xNeighbor.voxels[0], gridSize);
         }
 
+        FillFirstRowCache();
         TriangulateCellRows();
 
         if (yNeighbor != null) {
@@ -94,15 +99,55 @@ public class VoxelGrid : MonoBehaviour {
         mesh.triangles = triangles.ToArray();
     }
 
+    private void FillFirstRowCache() {
+        CacheFirstCorner(voxels[0]);
+        int i;
+        for (i = 0; i < resolution - 1; ++i) {
+            CacheNextEdgeAndCorner(i * 2, voxels[i], voxels[i + 1]);
+        }
+        if (xNeighbor != null) {
+            dummyX.BecomeXDummyOf(xNeighbor.voxels[0], gridSize);
+            CacheNextEdgeAndCorner(i * 2, voxels[i], dummyX);
+        }
+    }
+
+    private void CacheFirstCorner(Voxel voxel) {
+        if (voxel.state) {
+            rowCacheMax[0] = vertices.Count;
+            vertices.Add(voxel.position);
+        }
+    }
+
+    private void CacheNextEdgeAndCorner(int i, Voxel xMin, Voxel xMax) {
+        if (xMin.state != xMax.state) {
+            rowCacheMax[i + 1] = vertices.Count;
+            Vector3 p;
+			p.x = xMin.xEdge;
+			p.y = xMin.position.y;
+			p.z = 0f;
+			vertices.Add(p);
+        }
+        if (xMax.state) {
+            rowCacheMax[i + 2] = vertices.Count;
+            vertices.Add(xMax.position);
+        }
+    }
+
     private void TriangulateCellRows() {
         int cells = resolution - 1;
         for (int i = 0, y = 0; y < cells; ++y, ++i) {
+            SwapRowCaches();
+            CacheFirstCorner(voxels[i + resolution]);
+            CacheNextMiddleEdge(voxels[i], voxels[i + resolution]);
             for (int x = 0; x < cells; ++x, ++i) {
-                TriangulateCell(
-                    voxels[i],
-                    voxels[i + 1],
-                    voxels[ i + resolution],
-                    voxels[i + resolution + 1]);
+                Voxel a = voxels[i];
+                Voxel b = voxels[i + 1];
+                Voxel c = voxels[i + resolution];
+                Voxel d = voxels[i + resolution + 1];
+                int cacheIndex = x * 2;
+                CacheNextEdgeAndCorner(cacheIndex, c, d);
+                CacheNextMiddleEdge(b, d);
+                TriangulateCell(cacheIndex, a, b, c, d);
             }
             if (xNeighbor != null) {
                 TriangulateGapCell(i);
@@ -110,141 +155,157 @@ public class VoxelGrid : MonoBehaviour {
         }
     }
 
-    private void TriangulateCell(Voxel a, Voxel b, Voxel c, Voxel d) {
-        int cellType = 0;
-        if (a.state) {
-            cellType |= 1;
-        }
-        if (b.state) {
-            cellType |= 2;
-        }
-        if (c.state) {
-            cellType |= 4;
-        }
-        if (d.state) {
-            cellType |= 8;
-        }
+    private void SwapRowCaches() {
+        int[] rowSwap = rowCacheMin;
+        rowCacheMin = rowCacheMax;
+        rowCacheMax = rowSwap;
+    }
 
-        switch (cellType) {
-        case 0:
-            return;
-        case 1:
-            AddTriangle(a.position, a.yEdgePosition, a.xEdgePosition);
-            break;
-        case 2:
-            AddTriangle(b.position, a.xEdgePosition, b.yEdgePosition);
-            break;
-        case 3:
-            AddQuad(a.position, a.yEdgePosition, b.yEdgePosition, b.position);
-            break;
-        case 4:
-            AddTriangle(c.position, c.xEdgePosition, a.yEdgePosition);
-            break;
-        case 5:
-            AddQuad(a.position, c.position, c.xEdgePosition, a.xEdgePosition);
-            break;
-        case 6:
-    		AddTriangle(b.position, a.xEdgePosition, b.yEdgePosition);
-    		AddTriangle(c.position, c.xEdgePosition, a.yEdgePosition);
-    		break;
-        case 7:
-    		AddPentagon(a.position, c.position, c.xEdgePosition, b.yEdgePosition, b.position);
-			break;
-        case 8:
-            AddTriangle(d.position, b.yEdgePosition, c.xEdgePosition);
-            break;
-        case 9:
-    		AddTriangle(a.position, a.yEdgePosition, a.xEdgePosition);
-			AddTriangle(d.position, b.yEdgePosition, c.xEdgePosition);
-			break;
-        case 10:
-            AddQuad(a.xEdgePosition, c.xEdgePosition, d.position, b.position);
-            break;
-        case 11:
-    		AddPentagon(b.position, a.position, a.yEdgePosition, c.xEdgePosition, d.position);
-			break;
-        case 12:
-            AddQuad(a.yEdgePosition, c.position, d.position, b.yEdgePosition);
-            break;
-        case 13:
-    		AddPentagon(c.position, d.position, b.yEdgePosition, a.xEdgePosition, a.position);
-			break;
-        case 14:
-    		AddPentagon(d.position, b.position, a.xEdgePosition, a.yEdgePosition, c.position);
-    		break;
-        case 15:
-    		AddQuad(a.position, c.position, d.position, b.position);
-			break;
+    private void CacheNextMiddleEdge(Voxel yMin, Voxel yMax) {
+        edgeCacheMin = edgeCacheMax;
+        if (yMin.state != yMax.state) {
+            edgeCacheMax = vertices.Count;
+            Vector3 p;
+			p.x = yMin.position.x;
+			p.y = yMin.yEdge;
+			p.z = 0f;
+			vertices.Add(p);
         }
     }
+
+    private void TriangulateCell(int i, Voxel a, Voxel b, Voxel c, Voxel d) {
+		int cellType = 0;
+		if (a.state) {
+			cellType |= 1;
+		}
+		if (b.state) {
+			cellType |= 2;
+		}
+		if (c.state) {
+			cellType |= 4;
+		}
+		if (d.state) {
+			cellType |= 8;
+		}
+		switch (cellType) {
+		case 0:
+			return;
+		case 1:
+			AddTriangle(rowCacheMin[i], edgeCacheMin, rowCacheMin[i + 1]);
+			break;
+		case 2:
+			AddTriangle(rowCacheMin[i + 2], rowCacheMin[i + 1], edgeCacheMax);
+			break;
+		case 3:
+			AddQuad(rowCacheMin[i], edgeCacheMin, edgeCacheMax, rowCacheMin[i + 2]);
+			break;
+		case 4:
+			AddTriangle(rowCacheMax[i], rowCacheMax[i + 1], edgeCacheMin);
+			break;
+		case 5:
+			AddQuad(rowCacheMin[i], rowCacheMax[i], rowCacheMax[i + 1], rowCacheMin[i + 1]);
+			break;
+		case 6:
+			AddTriangle(rowCacheMin[i + 2], rowCacheMin[i + 1], edgeCacheMax);
+			AddTriangle(rowCacheMax[i], rowCacheMax[i + 1], edgeCacheMin);
+			break;
+		case 7:
+			AddPentagon(
+				rowCacheMin[i], rowCacheMax[i], rowCacheMax[i + 1], edgeCacheMax, rowCacheMin[i + 2]);
+			break;
+		case 8:
+			AddTriangle(rowCacheMax[i + 2], edgeCacheMax, rowCacheMax[i + 1]);
+			break;
+		case 9:
+			AddTriangle(rowCacheMin[i], edgeCacheMin, rowCacheMin[i + 1]);
+			AddTriangle(rowCacheMax[i + 2], edgeCacheMax, rowCacheMax[i + 1]);
+			break;
+		case 10:
+			AddQuad(rowCacheMin[i + 1], rowCacheMax[i + 1], rowCacheMax[i + 2], rowCacheMin[i + 2]);
+			break;
+		case 11:
+			AddPentagon(
+			    rowCacheMin[i + 2], rowCacheMin[i], edgeCacheMin, rowCacheMax[i + 1], rowCacheMax[i + 2]);
+			break;
+		case 12:
+			AddQuad(edgeCacheMin, rowCacheMax[i], rowCacheMax[i + 2], edgeCacheMax);
+			break;
+		case 13:
+			AddPentagon(rowCacheMax[i], rowCacheMax[i + 2], edgeCacheMax, rowCacheMin[i + 1], rowCacheMin[i]);
+			break;
+		case 14:
+			AddPentagon(rowCacheMax[i + 2],rowCacheMin[i + 2], rowCacheMin[i + 1], edgeCacheMin, rowCacheMax[i]);
+			break;
+		case 15:
+			AddQuad(rowCacheMin[i], rowCacheMax[i], rowCacheMax[i + 2], rowCacheMin[i + 2]);
+			break;
+		}
+	}
 
     private void TriangulateGapCell(int i) {
         Voxel dummySwap = dummyT;
         dummySwap.BecomeXDummyOf(xNeighbor.voxels[i + 1], gridSize);
         dummyT = dummyX;
         dummyX = dummySwap;
-        TriangulateCell(voxels[i], dummyT, voxels[i + resolution], dummyX);
+        int cacheIndex = (resolution - 1) * 2;
+        CacheNextEdgeAndCorner(cacheIndex, voxels[i + resolution], dummyX);
+		CacheNextMiddleEdge(dummyT, dummyX);
+        TriangulateCell(cacheIndex, voxels[i], dummyT, voxels[i + resolution], dummyX);
     }
 
     private void TriangulateGapRow () {
 		dummyY.BecomeYDummyOf(yNeighbor.voxels[0], gridSize);
 		int cells = resolution - 1;
 		int offset = cells * resolution;
+        SwapRowCaches();
+		CacheFirstCorner(dummyY);
+		CacheNextMiddleEdge(voxels[cells * resolution], dummyY);
 
 		for (int x = 0; x < cells; x++) {
 			Voxel dummySwap = dummyT;
 			dummySwap.BecomeYDummyOf(yNeighbor.voxels[x + 1], gridSize);
 			dummyT = dummyY;
 			dummyY = dummySwap;
-			TriangulateCell(voxels[x + offset], voxels[x + offset + 1], dummyT, dummyY);
+            int cacheIndex = x * 2;
+			CacheNextEdgeAndCorner(cacheIndex, dummyT, dummyY);
+			CacheNextMiddleEdge(voxels[x + offset + 1], dummyY);
+			TriangulateCell(cacheIndex, voxels[x + offset], voxels[x + offset + 1], dummyT, dummyY);
 		}
 
         if (xNeighbor != null) {
 			dummyT.BecomeXYDummyOf(xyNeighbor.voxels[0], gridSize);
-			TriangulateCell(voxels[voxels.Length - 1], dummyX, dummyY, dummyT);
+            int cacheIndex = cells * 2;
+			CacheNextEdgeAndCorner(cacheIndex, dummyY, dummyT);
+			CacheNextMiddleEdge(dummyX, dummyT);
+			TriangulateCell(cacheIndex, voxels[voxels.Length - 1], dummyX, dummyY, dummyT);
 		}
 	}
 
-    private void AddTriangle(Vector3 a, Vector3 b, Vector3 c) {
-        int vertexIndex = vertices.Count;
-        vertices.Add(a);
-        vertices.Add(b);
-        vertices.Add(c);
-        triangles.Add(vertexIndex);
-        triangles.Add(vertexIndex + 1);
-        triangles.Add(vertexIndex + 2);
+    private void AddTriangle(int a, int b, int c) {
+        triangles.Add(a);
+        triangles.Add(b);
+        triangles.Add(c);
     }
 
-    private void AddQuad(Vector3 a, Vector3 b, Vector3 c, Vector3 d) {
-        int vertexIndex = vertices.Count;
-		vertices.Add(a);
-		vertices.Add(b);
-		vertices.Add(c);
-		vertices.Add(d);
-		triangles.Add(vertexIndex);
-		triangles.Add(vertexIndex + 1);
-		triangles.Add(vertexIndex + 2);
-		triangles.Add(vertexIndex);
-		triangles.Add(vertexIndex + 2);
-		triangles.Add(vertexIndex + 3);
+    private void AddQuad(int a, int b, int c, int d) {
+		triangles.Add(a);
+		triangles.Add(b);
+		triangles.Add(c);
+        triangles.Add(a);
+        triangles.Add(c);
+		triangles.Add(d);
     }
 
-    private void AddPentagon (Vector3 a, Vector3 b, Vector3 c, Vector3 d, Vector3 e) {
-		int vertexIndex = vertices.Count;
-		vertices.Add(a);
-		vertices.Add(b);
-		vertices.Add(c);
-		vertices.Add(d);
-		vertices.Add(e);
-		triangles.Add(vertexIndex);
-		triangles.Add(vertexIndex + 1);
-		triangles.Add(vertexIndex + 2);
-		triangles.Add(vertexIndex);
-		triangles.Add(vertexIndex + 2);
-		triangles.Add(vertexIndex + 3);
-		triangles.Add(vertexIndex);
-		triangles.Add(vertexIndex + 3);
-		triangles.Add(vertexIndex + 4);
+    private void AddPentagon (int a, int b, int c, int d, int e) {
+		triangles.Add(a);
+		triangles.Add(b);
+		triangles.Add(c);
+        triangles.Add(a);
+        triangles.Add(c);
+		triangles.Add(d);
+        triangles.Add(a);
+        triangles.Add(d);
+		triangles.Add(e);
 	}
 
     private void CreateVoxel(int i, int x, int y) {
