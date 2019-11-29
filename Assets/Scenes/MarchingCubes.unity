@@ -131,6 +131,7 @@ GameObject:
   - component: {fileID: 675254216}
   - component: {fileID: 675254215}
   - component: {fileID: 675254214}
+  - component: {fileID: 675254217}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -155,8 +156,8 @@ Camera:
   m_GameObject: {fileID: 675254213}
   m_Enabled: 1
   serializedVersion: 2
-  m_ClearFlags: 1
-  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_ClearFlags: 2
+  m_BackGroundColor: {r: 0.3584906, g: 0.3584906, b: 0.3584906, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -203,6 +204,30 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &675254217
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 675254213}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b05104045d01034d843604b29fd5cdf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  target: {fileID: 0}
+  targetOffset: {x: 0, y: 0, z: 0}
+  distance: 5
+  maxDistance: 20
+  minDistance: 0.6
+  xSpeed: 200
+  ySpeed: 200
+  yMinLimit: -80
+  yMaxLimit: 80
+  zoomRate: 40
+  panSpeed: 0.3
+  zoomDampening: 5
 --- !u!1 &1382096952
 GameObject:
   m_ObjectHideFlags: 0
@@ -232,10 +257,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ea64b3a828b93564d83cc47b37038b53, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cubePrefab: {fileID: 3232359438594047787, guid: da0f01c69a5e0cd4fa34111634e021ce,
+  cubePrefab: {fileID: 4727859311027414783, guid: da0f01c69a5e0cd4fa34111634e021ce,
     type: 3}
-  resolution: 8
-  size: 8
+  resolution: 4
+  size: 4
 --- !u!4 &1382096954
 Transform:
   m_ObjectHideFlags: 0
