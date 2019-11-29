@@ -1,18 +1,20 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Vertex : MonoBehaviour {
+public class Vertex {
 
+    public int value = 0;
 
-    void Update() {
-        if (Input.GetMouseButton(0)) {
-            RaycastHit hitInfo;
-            if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hitInfo)) {
-                if (hitInfo.collider.gameObject == gameObject) {
-                    transform.parent.GetComponent<CubeGrid>().EditVertex(transform.TransformPoint(hitInfo.point));
-                }
-            }
-        }
+    public Vertex(int value) {
+        this.value = value;
+    }
+
+    public void SetValue(int value) {
+        this.value = value;
+    }
+
+    public int GetValue() {
+        return this.value;
     }
 }
