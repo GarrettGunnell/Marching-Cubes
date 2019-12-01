@@ -15,6 +15,7 @@ public class CubeGrid : MonoBehaviour {
     private Vertex[, ,] cubeVertices;
     private Material[, ,] vertexMaterials;
     private float voxelSize, halfSize;
+    private int triIndex;
 
     private void Awake() {
         cubeVertices = new Vertex[resolution, resolution, resolution];
@@ -34,7 +35,7 @@ public class CubeGrid : MonoBehaviour {
         mesh.name = "Marching Mesh";
         vertices = new List<Vector3>();
         triangles = new List<int>();
-        SetVertexColors();
+        Refresh();
     }
 
     public void EditVertex(Vector3 point, bool state) {
@@ -47,19 +48,14 @@ public class CubeGrid : MonoBehaviour {
         } else {
             vertex.SetValue(0);
         }
-        SetVertexColors();
-        Triangulate();
+        Refresh();
         Debug.Log(vertexX + ", " + vertexY + ", " + vertexZ);
     }
 
-    private void Triangulate() {
-        vertices.Clear();
-        triangles.Clear();
-        mesh.Clear();
-
-        Vertex[] cube = FindCube(0, 0, 0);
-        int triIndex = 0;
+    private void Triangulate(int x, int y, int z) {
+        Vertex[] cube = FindCube(x, y, z);
         int index = DetermineTriangleIndex(cube);
+        Debug.Log(index);
         for (int i = 0; i < 16; ++i) {
             int edge = Tables.triangulation[index, i];
 
@@ -70,7 +66,7 @@ public class CubeGrid : MonoBehaviour {
             Vector3 point = new Vector3(0, 0, 0);
             switch (edge) {
     		case 0:
-                point = new Vector3(cube[0].x, cube[0].y, cube[1].z / 2);
+                point = new Vector3(cube[0].x, cube[0].y, cube[1].z - halfSize);
     			break;
     		case 1:
                 point = new Vector3(cube[2].x - halfSize, cube[1].y, cube[1].z);
@@ -143,30 +139,37 @@ public class CubeGrid : MonoBehaviour {
         cube[6] = cubeVertices[x + 1, y + 1, z + 1];
         cube[7] = cubeVertices[x + 1, y + 1, z];
 
+        for (int i = 0; i < 8; ++i) {
+            int vertexValue = cube[i].GetValue();
+
+            if (vertexValue > 0) {
+                cube[i].SetColor(Color.white);
+            } else {
+                cube[i].SetColor(Color.black);
+            }
+        }
+
         return cube;
     }
 
     private void CreateVertex(int x, int y, int z) {
-        cubeVertices[x, y, z] = new Vertex(x * voxelSize, y * voxelSize, z * voxelSize, 0);
         GameObject o = Instantiate(cubePrefab) as GameObject;
         BoxCollider ob = o.AddComponent<BoxCollider>();
         o.transform.parent = transform;
         o.transform.localPosition = new Vector3(x * voxelSize, y * voxelSize, z * voxelSize);
         o.transform.localScale = Vector3.one * voxelSize * 0.1f;
-        vertexMaterials[x, y, z] = o.GetComponent<MeshRenderer>().material;
+        cubeVertices[x, y, z] = new Vertex(x * voxelSize, y * voxelSize, z * voxelSize, 0, o);
     }
 
-    private void SetVertexColors() {
-        for (int x = 0; x < resolution; ++x) {
-            for (int y = 0; y < resolution; ++y) {
-                for (int z = 0; z < resolution; ++z) {
-                    int vertexValue = cubeVertices[x, y, z].GetValue();
-
-                    if (vertexValue > 0) {
-                        vertexMaterials[x, y, z].color = Color.white;
-                    } else {
-                        vertexMaterials[x, y, z].color = Color.black;
-                    }
+    private void Refresh() {
+        vertices.Clear();
+        triangles.Clear();
+        mesh.Clear();
+        triIndex = 0;
+        for (int x = 0; x < resolution - 1; ++x) {
+            for (int y = 0; y < resolution - 1; ++y) {
+                for (int z = 0; z < resolution - 1; ++z) {
+                    Triangulate(x, y, z);
                 }
             }
         }
