@@ -6,11 +6,18 @@ public class VertexCollision : MonoBehaviour {
 
 
     private void Update() {
-        if (Input.GetMouseButton(0)) {
+        if (Input.GetMouseButton(0) && Input.GetKey(KeyCode.LeftControl)) {
             RaycastHit hitInfo;
             if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hitInfo)) {
                 if (hitInfo.collider.gameObject == gameObject) {
-                    transform.parent.GetComponent<CubeGrid>().EditVertex(transform.TransformPoint(hitInfo.point));
+                    transform.parent.GetComponent<CubeGrid>().EditVertex(transform.TransformPoint(hitInfo.point), false);
+                }
+            }
+        } else if (Input.GetMouseButton(0)) {
+            RaycastHit hitInfo;
+            if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hitInfo)) {
+                if (hitInfo.collider.gameObject == gameObject) {
+                    transform.parent.GetComponent<CubeGrid>().EditVertex(transform.TransformPoint(hitInfo.point), true);
                 }
             }
         }
