@@ -5,9 +5,13 @@ using UnityEngine;
 public class Vertex {
 
     public int value = 0;
+    public float x, y, z;
 
-    public Vertex(int value) {
+    public Vertex(float x, float y, float z, int value) {
         this.value = value;
+        this.x = x;
+        this.y = y;
+        this.z = z;
     }
 
     public void SetValue(int value) {
