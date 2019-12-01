@@ -34,15 +34,15 @@ public class CubeGrid : MonoBehaviour {
         int vertexY = (int)(point.y / voxelSize);
         int vertexZ = (int)(point.z / voxelSize);
         Vertex vertex = vertices[vertexX, vertexY, vertexZ];
-        Vertex[] cube = FindCube(vertexX, vertexY, vertexZ);
-        for (int i = 0; i < cube.Length; ++i) {
-            if (state) {
-                cube[i].SetValue(1);
-            } else {
-                cube[i].SetValue(0);
-            }
+        if (state) {
+            vertex.SetValue(1);
+        } else {
+            vertex.SetValue(0);
         }
         SetVertexColors();
+        Vertex[] cube = FindCube(0, 0, 0);
+        int index = DetermineTriangleIndex(cube);
+        Debug.Log(index);
         Debug.Log(vertexX + ", " + vertexY + ", " + vertexZ);
     }
 
@@ -50,8 +50,18 @@ public class CubeGrid : MonoBehaviour {
 
     }
 
-    private void DetermineTriangleIndex(Vertex[] cube) {
+    private int DetermineTriangleIndex(Vertex[] cube) {
+        int index = 0;
+        if (cube[0].GetValue() > 0) index |= 1;
+        if (cube[1].GetValue() > 0) index |= 2;
+        if (cube[2].GetValue() > 0) index |= 4;
+        if (cube[3].GetValue() > 0) index |= 8;
+        if (cube[4].GetValue() > 0) index |= 16;
+        if (cube[5].GetValue() > 0) index |= 32;
+        if (cube[6].GetValue() > 0) index |= 64;
+        if (cube[7].GetValue() > 0) index |= 128;
 
+        return index;
     }
 
     private Vertex[] FindCube(int x, int y, int z) {
