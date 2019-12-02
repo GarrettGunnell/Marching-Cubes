@@ -14,14 +14,20 @@ public class Vertex {
         float globalX = x + (chunkX * size);
         float globalY = y + (chunkY * size);
         float globalZ = z + (chunkZ * size);
-        this.value = globalY + (Mathf.Sin(globalX * Mathf.PI) + Mathf.Sin(globalZ * Mathf.PI) + Mathf.Sin(globalY * Mathf.PI)) * 2.25f;
+        if (globalY == 0) {
+            this.value = -1;
+        } else {
+            this.value = globalY + Mathf.Sin(globalX) + Mathf.Sin(globalZ);
+        }
         this.position = new Vector3(x, y, z);
     }
 
 
-    public Vertex(float x, float y, float z, int height, float size, GameObject o) {
-        float heightofvert = y + (height * size);
-        this.value = Mathf.Sin(heightofvert * x);
+    public Vertex(float x, float y, float z, int chunkX, int chunkY, int chunkZ, float size, GameObject o) {
+        float globalX = x + (chunkX * size);
+        float globalY = y + (chunkY * size);
+        float globalZ = z + (chunkZ * size);
+        this.value = globalY;
         this.position = new Vector3(x, y, z);
         this.material = o.GetComponent<MeshRenderer>().material;
     }

@@ -151,6 +151,7 @@ MonoBehaviour:
   xzNeighbor: {fileID: 0}
   zyNeighbor: {fileID: 0}
   xyzNeighbor: {fileID: 0}
+  isoLevel: 0
 --- !u!33 &2724278154925693006
 MeshFilter:
   m_ObjectHideFlags: 0

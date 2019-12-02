@@ -11,6 +11,10 @@ public class CubeMap : MonoBehaviour {
 
     public CubeGrid cubeGridPrefab;
 
+    public bool refresh = false;
+    private bool oldRefresh;
+    public float isoLevel = 1;
+
 
     private CubeGrid[, ,] chunks;
     private float chunkSize, cubeSize, halfSize;
@@ -19,6 +23,7 @@ public class CubeMap : MonoBehaviour {
         halfSize = size * 0.5f;
         chunkSize = size / chunkResolution;
         cubeSize = chunkSize / resolution;
+        oldRefresh = refresh;
 
         chunks = new CubeGrid[chunkResolution, chunkResolution, chunkResolution];
         for (int x = 0; x < chunkResolution; ++x) {
@@ -37,6 +42,19 @@ public class CubeMap : MonoBehaviour {
         }
     }
 
+    private void Update() {
+        if (refresh != oldRefresh) {
+            oldRefresh = refresh;
+            for (int x = 0; x < chunkResolution; ++x) {
+                for (int y = 0; y < chunkResolution; ++y) {
+                    for (int z = 0; z < chunkResolution; ++z) {
+                        chunks[x, y, z].updateIsoLevel(isoLevel);
+                    }
+                }
+            }
+        }
+    }
+
     public void EditVertex(Vector3 point, int value) {
         int vertexX = (int)(point.x / cubeSize);
         int vertexY = (int)(point.y / cubeSize);
@@ -48,7 +66,7 @@ public class CubeMap : MonoBehaviour {
         vertexY -= chunkY * resolution;
         vertexZ -= chunkZ * resolution;
         Vertex vertex = chunks[chunkX, chunkY, chunkZ].cubeVertices[vertexX, vertexY, vertexZ];
-        //Debug.Log(vertex.GetValue());
+        Debug.Log(vertex.GetValue());
         vertex.SetValue(value);
         if (chunkX > 0) {
             chunks[chunkX - 1, chunkY, chunkZ].Refresh();
@@ -72,12 +90,12 @@ public class CubeMap : MonoBehaviour {
             chunks[chunkX - 1, chunkY - 1, chunkZ - 1].Refresh();
         }
         chunks[chunkX, chunkY, chunkZ].Refresh();
-        Debug.Log(vertexX + ", " + vertexY + ", " + vertexZ);
+        //Debug.Log(vertexX + ", " + vertexY + ", " + vertexZ);
     }
 
     private void CreateChunk(int x, int y, int z) {
         CubeGrid chunk = Instantiate(cubeGridPrefab) as CubeGrid;
-        chunk.Initialize(resolution, chunkSize, x, y, z);
+        chunk.Initialize(resolution, chunkSize, isoLevel, x, y, z);
         chunk.transform.parent = transform;
         chunk.transform.localPosition = new Vector3(x * chunkSize, y * chunkSize, z * chunkSize);
         if (x > 0) {

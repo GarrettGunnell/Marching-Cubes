@@ -150,10 +150,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   size: 8
-  resolution: 8
+  resolution: 4
   chunkResolution: 8
   cubeGridPrefab: {fileID: 2724278154925693003, guid: c33df807da556e84cac80f7d1cb84499,
     type: 3}
+  refresh: 0
+  isoLevel: 3
 --- !u!4 &509883837
 Transform:
   m_ObjectHideFlags: 0
