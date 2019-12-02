@@ -143,7 +143,14 @@ MonoBehaviour:
   stencil: {fileID: 2724278154730364553}
   resolution: 4
   size: 2
-  isDemonstration: 1
+  isDemonstration: 0
+  xNeighbor: {fileID: 0}
+  yNeighbor: {fileID: 0}
+  zNeighbor: {fileID: 0}
+  xyNeighbor: {fileID: 0}
+  xzNeighbor: {fileID: 0}
+  zyNeighbor: {fileID: 0}
+  xyzNeighbor: {fileID: 0}
 --- !u!33 &2724278154925693006
 MeshFilter:
   m_ObjectHideFlags: 0

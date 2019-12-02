@@ -4,20 +4,24 @@ using UnityEngine;
 
 public class Vertex {
 
-    public int value = 0;
+    public float value;
     public Vector3 position;
     public Material material;
 
     public Vertex() {}
 
-    public Vertex(float x, float y, float z, int value) {
-        this.value = value;
+    public Vertex(float x, float y, float z, int chunkX, int chunkY, int chunkZ, float size) {
+        float globalX = x + (chunkX * size);
+        float globalY = y + (chunkY * size);
+        float globalZ = z + (chunkZ * size);
+        this.value = globalY + (Mathf.Sin(globalX * Mathf.PI) + Mathf.Sin(globalZ * Mathf.PI) + Mathf.Sin(globalY * Mathf.PI)) * 2.25f;
         this.position = new Vector3(x, y, z);
     }
 
 
-    public Vertex(float x, float y, float z, int value, GameObject o) {
-        this.value = value;
+    public Vertex(float x, float y, float z, int height, float size, GameObject o) {
+        float heightofvert = y + (height * size);
+        this.value = Mathf.Sin(heightofvert * x);
         this.position = new Vector3(x, y, z);
         this.material = o.GetComponent<MeshRenderer>().material;
     }
@@ -77,7 +81,7 @@ public class Vertex {
         this.value = value;
     }
 
-    public int GetValue() {
+    public float GetValue() {
         return this.value;
     }
 }

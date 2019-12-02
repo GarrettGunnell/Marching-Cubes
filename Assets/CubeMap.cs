@@ -20,11 +20,18 @@ public class CubeMap : MonoBehaviour {
         chunkSize = size / chunkResolution;
         cubeSize = chunkSize / resolution;
 
-        chunks = new CubeGrid[resolution, resolution, resolution];
+        chunks = new CubeGrid[chunkResolution, chunkResolution, chunkResolution];
         for (int x = 0; x < chunkResolution; ++x) {
             for (int y = 0; y < chunkResolution; ++y) {
                 for (int z = 0; z < chunkResolution; ++z) {
                     CreateChunk(x, y, z);
+                }
+            }
+        }
+        for (int x = 0; x < chunkResolution; ++x) {
+            for (int y = 0; y < chunkResolution; ++y) {
+                for (int z = 0; z < chunkResolution; ++z) {
+                    chunks[x, y, z].Refresh();
                 }
             }
         }
@@ -41,6 +48,7 @@ public class CubeMap : MonoBehaviour {
         vertexY -= chunkY * resolution;
         vertexZ -= chunkZ * resolution;
         Vertex vertex = chunks[chunkX, chunkY, chunkZ].cubeVertices[vertexX, vertexY, vertexZ];
+        //Debug.Log(vertex.GetValue());
         vertex.SetValue(value);
         if (chunkX > 0) {
             chunks[chunkX - 1, chunkY, chunkZ].Refresh();
@@ -69,7 +77,7 @@ public class CubeMap : MonoBehaviour {
 
     private void CreateChunk(int x, int y, int z) {
         CubeGrid chunk = Instantiate(cubeGridPrefab) as CubeGrid;
-        chunk.Initialize(resolution, chunkSize);
+        chunk.Initialize(resolution, chunkSize, x, y, z);
         chunk.transform.parent = transform;
         chunk.transform.localPosition = new Vector3(x * chunkSize, y * chunkSize, z * chunkSize);
         if (x > 0) {

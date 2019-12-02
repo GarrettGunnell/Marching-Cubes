@@ -24,7 +24,7 @@ public class CubeGrid : MonoBehaviour {
     private float voxelSize, halfSize;
     private int triIndex;
 
-    public void Initialize(int resolution, float size) {
+    public void Initialize(int resolution, float size, int chunkX, int chunkY, int chunkZ) {
         this.resolution = resolution;
         this.size = size;
         cubeVertices = new Vertex[resolution, resolution, resolution];
@@ -36,13 +36,13 @@ public class CubeGrid : MonoBehaviour {
             for (int y = 0; y < resolution; ++y) {
                 for (int z = 0; z < resolution; ++z) {
                     //Debug.Log(x + ", " + y + ", " + z);
-                    CreateVertex(x, y, z);
+                    CreateVertex(x, y, z, chunkX, chunkY, chunkZ);
                 }
             }
         }
         GetComponent<MeshFilter>().mesh = mesh = new Mesh();
         stencil.gameObject.SetActive(false);
-        meshc = gameObject.AddComponent<MeshCollider>();
+        //meshc = gameObject.AddComponent<MeshCollider>();
         mesh.name = "Marching Mesh";
         vertices = new List<Vector3>();
         triangles = new List<int>();
@@ -75,14 +75,14 @@ public class CubeGrid : MonoBehaviour {
 			stencil.gameObject.SetActive(false);
 		}
     }
-    */
+
     private void OnGUI() {
         GUILayout.BeginArea(new Rect(4f, 4f, 150f, 500f));
         GUILayout.Label("Radius");
         radiusIndex = GUILayout.SelectionGrid(radiusIndex, radiusNames, 6);
         GUILayout.EndArea();
     }
-
+    */
     public void EditVertices(Vector3 point, int value) {
         for (int x = 0; x < resolution; ++x) {
             for (int y = 0; y < resolution; ++y) {
@@ -331,7 +331,7 @@ public class CubeGrid : MonoBehaviour {
             vertex.SetValue(0);
         }
         Refresh();
-        Debug.Log(vertexX + ", " + vertexY + ", " + vertexZ);
+        //Debug.Log(vertexX + ", " + vertexY + ", " + vertexZ);
     }
 
     private void Triangulate(Vertex[] cube) {
@@ -365,12 +365,13 @@ public class CubeGrid : MonoBehaviour {
 
         mesh.vertices = vertices.ToArray();
         mesh.triangles = triangles.ToArray();
-        meshc.sharedMesh = mesh;
+        //meshc.sharedMesh = mesh;
         mesh.RecalculateNormals();
     }
 
     private Vector3 interpolateVertices(Vertex a, Vertex b) {
-        Vector3 point = a.position + ((b.position - a.position) / 2);
+        float t = (0 - a.GetValue()) / (b.GetValue() - a.GetValue());
+        Vector3 point = a.position + t * (b.position - a.position);
 
         return point;
     }
@@ -385,7 +386,6 @@ public class CubeGrid : MonoBehaviour {
         if (cube[5].GetValue() < 0) index |= 32;
         if (cube[6].GetValue() < 0) index |= 64;
         if (cube[7].GetValue() < 0) index |= 128;
-
         return index;
     }
 
@@ -393,6 +393,7 @@ public class CubeGrid : MonoBehaviour {
         Vertex[] cube = new Vertex[8];
 
         cube[0] = cubeVertices[x, y, z];
+        //Debug.Log(cube[0].GetValue());
         cube[1] = cubeVertices[x + 1, y, z];
         cube[2] = cubeVertices[x + 1, y, z + 1];
         cube[3] = cubeVertices[x, y, z + 1];
@@ -403,7 +404,7 @@ public class CubeGrid : MonoBehaviour {
 
         if (isDemonstration) {
             for (int i = 0; i < 8; ++i) {
-                int vertexValue = cube[i].GetValue();
+                float vertexValue = cube[i].GetValue();
 
                 if (vertexValue < 0) {
                     cube[i].SetColor(Color.white);
@@ -416,17 +417,17 @@ public class CubeGrid : MonoBehaviour {
         return cube;
     }
 
-    private void CreateVertex(int x, int y, int z) {
+    private void CreateVertex(int x, int y, int z, int chunkX, int chunkY, int chunkZ) {
         if (isDemonstration) {
             GameObject o = Instantiate(cubePrefab) as GameObject;
             SphereCollider ob = o.AddComponent<SphereCollider>();
             o.transform.parent = transform;
             o.transform.localPosition = new Vector3(x * voxelSize, y * voxelSize, z * voxelSize);
             o.transform.localScale = Vector3.one * voxelSize * 0.1f;
-            Debug.Log(o.transform.position);
-            cubeVertices[x, y, z] = new Vertex(x * voxelSize, y * voxelSize, z * voxelSize, 0, o);
+            //Debug.Log(o.transform.position);
+            cubeVertices[x, y, z] = new Vertex(x * voxelSize, y * voxelSize, z * voxelSize, chunkY, size, o);
         } else {
-            cubeVertices[x, y, z] = new Vertex(x * voxelSize, y * voxelSize, z * voxelSize, 0);
+            cubeVertices[x, y, z] = new Vertex(x * voxelSize, y * voxelSize, z * voxelSize, chunkX, chunkY, chunkZ, size);
         }
     }
 
