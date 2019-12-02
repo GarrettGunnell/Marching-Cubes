@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[SelectionBase]
 public class CubeGrid : MonoBehaviour {
 
     public GameObject cubePrefab;
@@ -21,7 +22,9 @@ public class CubeGrid : MonoBehaviour {
     private float voxelSize, halfSize;
     private int triIndex;
 
-    private void Awake() {
+    public void Initialize(int resolution, float size) {
+        this.resolution = resolution;
+        this.size = size;
         cubeVertices = new Vertex[resolution, resolution, resolution];
         vertexMaterials = new Material[resolution, resolution, resolution];
         voxelSize = size / resolution;
@@ -36,13 +39,14 @@ public class CubeGrid : MonoBehaviour {
             }
         }
         GetComponent<MeshFilter>().mesh = mesh = new Mesh();
+        stencil.gameObject.SetActive(false);
         meshc = gameObject.AddComponent<MeshCollider>();
         mesh.name = "Marching Mesh";
         vertices = new List<Vector3>();
         triangles = new List<int>();
         Refresh();
     }
-
+    /*
     private void Update() {
 		RaycastHit hitInfo;
 		if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hitInfo) && hitInfo.collider.gameObject == gameObject) {
@@ -51,19 +55,17 @@ public class CubeGrid : MonoBehaviour {
 			stencil.gameObject.SetActive(true);
             if (Input.GetMouseButtonDown(0)) {
                 Vector3 p = transform.TransformPoint(hitInfo.point);
-                Debug.Log((int)(p.x / voxelSize) + ", " + (int)(p.y / voxelSize) + ", " + (int)(p.z / voxelSize));
-                EditVertices(p, -1);
+                UpdateMesh(p, -1);
             } else if (Input.GetMouseButtonDown(1)) {
                 Vector3 p = transform.TransformPoint(hitInfo.point);
-                Debug.Log((int)(p.x / voxelSize) + ", " + (int)(p.y / voxelSize) + ", " + (int)(p.z / voxelSize));
-                EditVertices(p, 0);
+                UpdateMesh(p, 0);
             }
 		}
 		else {
 			stencil.gameObject.SetActive(false);
 		}
     }
-
+    */
     private void OnGUI() {
         GUILayout.BeginArea(new Rect(4f, 4f, 150f, 500f));
         GUILayout.Label("Radius");
@@ -85,6 +87,21 @@ public class CubeGrid : MonoBehaviour {
         Refresh();
     }
 
+    private void UpdateMesh(Vector3 point, int value) {
+        vertices.Clear();
+        triangles.Clear();
+        mesh.Clear();
+        triIndex = 0;
+        for (int x = 0; x < resolution - 1; ++x) {
+            for (int y = 0; y < resolution - 1; ++y) {
+                for (int z = 0; z < resolution - 1; ++z) {
+                    UpdateCubeValues(x, y, z, point, value);
+                    Triangulate(x, y, z);
+                }
+            }
+        }
+    }
+
     private void Refresh() {
         vertices.Clear();
         triangles.Clear();
@@ -95,6 +112,17 @@ public class CubeGrid : MonoBehaviour {
                 for (int z = 0; z < resolution - 1; ++z) {
                     Triangulate(x, y, z);
                 }
+            }
+        }
+    }
+
+    private void UpdateCubeValues(int x, int y, int z, Vector3 point, int value) {
+        Vertex[] cube = FindCube(x, y, z);
+
+        for (int i = 0; i < 8; ++i) {
+            Vector3 p = new Vector3(cube[i].x - point.x, cube[i].y - point.y, cube[i].z - point.z);
+            if (p.x * p.x + p.y * p.y + p.z * p.z <= radiusIndex * radiusIndex) {
+                cube[i].SetValue(value);
             }
         }
     }
@@ -117,62 +145,44 @@ public class CubeGrid : MonoBehaviour {
         Vertex[] cube = FindCube(x, y, z);
         int index = DetermineTriangleIndex(cube);
         //Debug.Log(index);
-        for (int i = 15; i >= 0; --i) {
+        for (int i = 0; Tables.triangulation[index, i] != -1; i += 3) {
             int edge = Tables.triangulation[index, i];
 
-            if (edge == -1) {
-                continue;
-            }
+            int a0 = Tables.cornerIndexAFromEdge[Tables.triangulation[index, i]];
+            int b0 = Tables.cornerIndexBFromEdge[Tables.triangulation[index, i]];
+            int a1 = Tables.cornerIndexAFromEdge[Tables.triangulation[index, i + 1]];
+            int b1 = Tables.cornerIndexBFromEdge[Tables.triangulation[index, i + 1]];
+            int a2 = Tables.cornerIndexAFromEdge[Tables.triangulation[index, i + 2]];
+            int b2 = Tables.cornerIndexBFromEdge[Tables.triangulation[index, i + 2]];
 
-            Vector3 point = new Vector3(0, 0, 0);
-            switch (edge) {
-    		case 0:
-                point = new Vector3(cube[0].x, cube[0].y, cube[1].z - halfSize);
-    			break;
-    		case 1:
-                point = new Vector3(cube[2].x - halfSize, cube[1].y, cube[1].z);
-    			break;
-    		case 2:
-                point = new Vector3(cube[2].x, cube[2].y, cube[2].z - halfSize);
-    			break;
-    		case 3:
-                point = new Vector3(cube[3].x - halfSize, cube[3].y, cube[3].z);
-    			break;
-    		case 4:
-                point = new Vector3(cube[4].x, cube[4].y, cube[5].z - halfSize);
-    			break;
-    		case 5:
-                point = new Vector3(cube[6].x - halfSize, cube[5].y, cube[5].z);
-    			break;
-    		case 6:
-                point = new Vector3(cube[7].x, cube[7].y, cube[6].z - halfSize);
-    			break;
-    		case 7:
-                point = new Vector3(cube[7].x - halfSize, cube[7].y, cube[7].z);
-    			break;
-    		case 8:
-                point = new Vector3(cube[0].x, cube[4].y - halfSize, cube[0].z);
-    			break;
-    		case 9:
-                point = new Vector3(cube[1].x, cube[5].y - halfSize, cube[1].z);
-    			break;
-    		case 10:
-                point = new Vector3(cube[2].x, cube[6].y - halfSize, cube[2].z);
-    			break;
-    		case 11:
-                point = new Vector3(cube[3].x, cube[7].y - halfSize, cube[3].z);
-    			break;
-    		}
+            Vector3 pointA = interpolateVertices(cube[a0], cube[b0]);
+            Vector3 pointB = interpolateVertices(cube[a1], cube[b1]);
+            Vector3 pointC = interpolateVertices(cube[a2], cube[b2]);
 
-            vertices.Add(point);
+
+            vertices.Add(pointA);
+            vertices.Add(pointB);
+            vertices.Add(pointC);
             triangles.Add(triIndex);
-            ++triIndex;
+            triangles.Add(triIndex + 1);
+            triangles.Add(triIndex + 2);
+            triIndex += 3;
         }
 
         mesh.vertices = vertices.ToArray();
         mesh.triangles = triangles.ToArray();
         meshc.sharedMesh = mesh;
         mesh.RecalculateNormals();
+    }
+
+    private Vector3 interpolateVertices(Vertex a, Vertex b) {
+        Vector3 point = new Vector3(
+            a.x + ((b.x - a.x) / 2),
+            a.y + ((b.y - a.y) / 2),
+            a.z + ((b.z - a.z) / 2)
+        );
+
+        return point;
     }
 
     private int DetermineTriangleIndex(Vertex[] cube) {
@@ -193,13 +203,13 @@ public class CubeGrid : MonoBehaviour {
         Vertex[] cube = new Vertex[8];
 
         cube[0] = cubeVertices[x, y, z];
-        cube[1] = cubeVertices[x, y, z + 1];
+        cube[1] = cubeVertices[x + 1, y, z];
         cube[2] = cubeVertices[x + 1, y, z + 1];
-        cube[3] = cubeVertices[x + 1, y, z];
+        cube[3] = cubeVertices[x, y, z + 1];
         cube[4] = cubeVertices[x, y + 1, z];
-        cube[5] = cubeVertices[x, y + 1, z + 1];
+        cube[5] = cubeVertices[x + 1, y + 1, z];
         cube[6] = cubeVertices[x + 1, y + 1, z + 1];
-        cube[7] = cubeVertices[x + 1, y + 1, z];
+        cube[7] = cubeVertices[x, y + 1, z + 1];
 
         if (isDemonstration) {
             for (int i = 0; i < 8; ++i) {
@@ -224,13 +234,13 @@ public class CubeGrid : MonoBehaviour {
             o.transform.localPosition = new Vector3(x * voxelSize, y * voxelSize, z * voxelSize);
             o.transform.localScale = Vector3.one * voxelSize * 0.1f;
             if (y == 0) {
-                cubeVertices[x, y, z] = new Vertex(x * voxelSize, y * voxelSize, z * voxelSize, -1, o);
+                cubeVertices[x, y, z] = new Vertex(x * voxelSize, y * voxelSize, z * voxelSize, 0, o);
             } else {
                 cubeVertices[x, y, z] = new Vertex(x * voxelSize, y * voxelSize, z * voxelSize, 0, o);
             }
         } else {
             if (y == 0) {
-                cubeVertices[x, y, z] = new Vertex(x * voxelSize, y * voxelSize, z * voxelSize, -1);
+                cubeVertices[x, y, z] = new Vertex(x * voxelSize, y * voxelSize, z * voxelSize, 0);
             } else {
                 cubeVertices[x, y, z] = new Vertex(x * voxelSize, y * voxelSize, z * voxelSize, 0);
             }

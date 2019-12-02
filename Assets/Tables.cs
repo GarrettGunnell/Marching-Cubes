@@ -521,8 +521,8 @@ public class Tables : MonoBehaviour {
         {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 }
         };
 
-    /*
-    static const int cornerIndexAFromEdge[12] = {
+
+    public static readonly int[] cornerIndexAFromEdge = {
         0,
         1,
         2,
@@ -537,7 +537,7 @@ public class Tables : MonoBehaviour {
         3
     };
 
-    static const int cornerIndexBFromEdge[12] = {
+    public static readonly int[] cornerIndexBFromEdge = {
         1,
         2,
         3,
@@ -551,5 +551,5 @@ public class Tables : MonoBehaviour {
         6,
         7
     };
-    */
+
 }
