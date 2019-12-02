@@ -8,6 +8,14 @@ public class Vertex {
     public float x, y, z;
     public Material material;
 
+    public Vertex(float x, float y, float z, int value) {
+        this.value = value;
+        this.x = x;
+        this.y = y;
+        this.z = z;
+    }
+
+
     public Vertex(float x, float y, float z, int value, GameObject o) {
         this.value = value;
         this.x = x;
