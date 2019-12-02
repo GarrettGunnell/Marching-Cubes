@@ -7,16 +7,18 @@ public class CubeGrid : MonoBehaviour {
 
     public GameObject cubePrefab;
     public Transform stencil;
-    public int resolution = 8;
-    public float size = 8;
+    public int resolution;
+    public float size;
     public bool isDemonstration;
+    public CubeGrid xNeighbor, yNeighbor, zNeighbor, xyNeighbor, xzNeighbor, zyNeighbor, xyzNeighbor;
 
     private Mesh mesh;
     private MeshCollider meshc;
     private List<int> triangles;
     private List<Vector3> vertices;
-    private Vertex[, ,] cubeVertices;
+    public Vertex[, ,] cubeVertices;
     private Material[, ,] vertexMaterials;
+    private Vertex dummy1, dummy2, dummy3, dummy4, dummy5, dummy6, dummy7;
     private static string[] radiusNames = {"0", "1", "2", "3", "4", "5"};
     private int radiusIndex = 3;
     private float voxelSize, halfSize;
@@ -44,6 +46,14 @@ public class CubeGrid : MonoBehaviour {
         mesh.name = "Marching Mesh";
         vertices = new List<Vector3>();
         triangles = new List<int>();
+
+        dummy1 = new Vertex();
+        dummy2 = new Vertex();
+        dummy3 = new Vertex();
+        dummy4 = new Vertex();
+        dummy5 = new Vertex();
+        dummy6 = new Vertex();
+        dummy7 = new Vertex();
         Refresh();
     }
     /*
@@ -77,7 +87,7 @@ public class CubeGrid : MonoBehaviour {
         for (int x = 0; x < resolution; ++x) {
             for (int y = 0; y < resolution; ++y) {
                 for (int z = 0; z < resolution; ++z) {
-                    Vector3 p = new Vector3(cubeVertices[x, y, z].x - point.x, cubeVertices[x, y, z].y - point.y, cubeVertices[x, y, z].z - point.z);
+                    Vector3 p = cubeVertices[x, y, z].position - point;
                     if (p.x * p.x + p.y * p.y + p.z * p.z <= radiusIndex * radiusIndex) {
                         cubeVertices[x, y, z].SetValue(value);
                     }
@@ -96,13 +106,13 @@ public class CubeGrid : MonoBehaviour {
             for (int y = 0; y < resolution - 1; ++y) {
                 for (int z = 0; z < resolution - 1; ++z) {
                     UpdateCubeValues(x, y, z, point, value);
-                    Triangulate(x, y, z);
+                    //Triangulate(x, y, z);
                 }
             }
         }
     }
 
-    private void Refresh() {
+    public void Refresh() {
         vertices.Clear();
         triangles.Clear();
         mesh.Clear();
@@ -110,17 +120,200 @@ public class CubeGrid : MonoBehaviour {
         for (int x = 0; x < resolution - 1; ++x) {
             for (int y = 0; y < resolution - 1; ++y) {
                 for (int z = 0; z < resolution - 1; ++z) {
-                    Triangulate(x, y, z);
+                    Vertex[] cube = FindCube(x, y, z);
+                    Triangulate(cube);
                 }
             }
         }
+
+        if (xNeighbor != null) {
+            TriangulateAcrossX();
+        }
+        if (zNeighbor != null) {
+            TriangulateAcrossZ();
+        }
+        if (yNeighbor != null) {
+            TriangulateAcrossY();
+        }
+        if (zyNeighbor != null) {
+            TriangulateAcrossZY();
+        }
+        if (xyNeighbor != null) {
+            TriangulateAcrossXY();
+        }
+        if (xzNeighbor != null) {
+            TriangulateAcrossXZ();
+        }
+        if (xyzNeighbor != null) {
+            TriangulateAcrossXYZ();
+        }
+    }
+
+    public void TriangulateAcrossX() {
+        for (int y = 0; y < resolution - 1; ++y) {
+            for (int z = 0; z < resolution - 1; ++z) {
+                Vertex[] cube = new Vertex[8];
+                dummy1.BecomeXDummyOf(xNeighbor.cubeVertices[0, y, z], size);
+                dummy2.BecomeXDummyOf(xNeighbor.cubeVertices[0, y, z + 1], size);
+                dummy3.BecomeXDummyOf(xNeighbor.cubeVertices[0, y + 1, z], size);
+                dummy4.BecomeXDummyOf(xNeighbor.cubeVertices[0, y + 1, z + 1], size);
+
+                cube[0] = cubeVertices[resolution - 1, y, z];
+                cube[1] = dummy1;
+                cube[2] = dummy2;
+                cube[3] = cubeVertices[resolution - 1, y, z + 1];
+                cube[4] = cubeVertices[resolution - 1, y + 1, z];
+                cube[5] = dummy3;
+                cube[6] = dummy4;
+                cube[7] = cubeVertices[resolution - 1, y + 1, z + 1];
+
+                Triangulate(cube);
+            }
+        }
+    }
+
+    public void TriangulateAcrossZ() {
+        for (int x = 0; x < resolution - 1; ++x) {
+            for (int y = 0; y < resolution - 1; ++y) {
+                Vertex[] cube = new Vertex[8];
+                dummy1.BecomeZDummyOf(zNeighbor.cubeVertices[x + 1, y, 0], size);
+                dummy2.BecomeZDummyOf(zNeighbor.cubeVertices[x, y, 0], size);
+                dummy3.BecomeZDummyOf(zNeighbor.cubeVertices[x + 1, y + 1, 0], size);
+                dummy4.BecomeZDummyOf(zNeighbor.cubeVertices[x, y + 1, 0], size);
+
+                cube[0] = cubeVertices[x, y, resolution - 1];
+                cube[1] = cubeVertices[x + 1, y, resolution - 1];
+                cube[2] = dummy1;
+                cube[3] = dummy2;
+                cube[4] = cubeVertices[x, y + 1, resolution - 1];
+                cube[5] = cubeVertices[x + 1, y + 1, resolution - 1];
+                cube[6] = dummy3;
+                cube[7] = dummy4;
+
+                Triangulate(cube);
+            }
+        }
+    }
+
+    public void TriangulateAcrossY() {
+        for (int x = 0; x < resolution - 1; ++x) {
+            for (int z = 0; z < resolution - 1; ++z) {
+                Vertex[] cube = new Vertex[8];
+                dummy1.BecomeYDummyOf(yNeighbor.cubeVertices[x, 0, z], size);
+                dummy2.BecomeYDummyOf(yNeighbor.cubeVertices[x + 1, 0, z], size);
+                dummy3.BecomeYDummyOf(yNeighbor.cubeVertices[x + 1, 0, z + 1], size);
+                dummy4.BecomeYDummyOf(yNeighbor.cubeVertices[x, 0, z + 1], size);
+
+                cube[0] = cubeVertices[x, resolution - 1, z];
+                cube[1] = cubeVertices[x + 1, resolution - 1, z];
+                cube[2] = cubeVertices[x + 1, resolution - 1, z + 1];
+                cube[3] = cubeVertices[x, resolution - 1, z + 1];
+                cube[4] = dummy1;
+                cube[5] = dummy2;
+                cube[6] = dummy3;
+                cube[7] = dummy4;
+
+                Triangulate(cube);
+            }
+        }
+    }
+
+    public void TriangulateAcrossZY() {
+        for (int x = 0; x < resolution - 1; ++x) {
+            Vertex[] cube = new Vertex[8];
+            dummy1.BecomeZDummyOf(zNeighbor.cubeVertices[x + 1, resolution - 1, 0], size);
+            dummy2.BecomeZDummyOf(zNeighbor.cubeVertices[x, resolution - 1, 0], size);
+            dummy3.BecomeYDummyOf(yNeighbor.cubeVertices[x, 0, resolution - 1], size);
+            dummy4.BecomeYDummyOf(yNeighbor.cubeVertices[x + 1, 0, resolution - 1], size);
+            dummy5.BecomeZYDummyOf(zyNeighbor.cubeVertices[x + 1, 0, 0], size);
+            dummy6.BecomeZYDummyOf(zyNeighbor.cubeVertices[x, 0, 0], size);
+
+            cube[0] = cubeVertices[x, resolution - 1, resolution - 1];
+            cube[1] = cubeVertices[x + 1, resolution - 1, resolution - 1];
+            cube[2] = dummy1;
+            cube[3] = dummy2;
+            cube[4] = dummy3;
+            cube[5] = dummy4;
+            cube[6] = dummy5;
+            cube[7] = dummy6;
+
+            Triangulate(cube);
+        }
+    }
+
+    public void TriangulateAcrossXY() {
+        for (int z = 0; z < resolution - 1; ++z) {
+            Vertex[] cube = new Vertex[8];
+            dummy1.BecomeXDummyOf(xNeighbor.cubeVertices[0, resolution - 1, z], size);
+            dummy2.BecomeXDummyOf(xNeighbor.cubeVertices[0, resolution - 1, z + 1], size);
+            dummy3.BecomeYDummyOf(yNeighbor.cubeVertices[resolution - 1, 0, z], size);
+            dummy4.BecomeXYDummyOf(xyNeighbor.cubeVertices[0, 0, z], size);
+            dummy5.BecomeXYDummyOf(xyNeighbor.cubeVertices[0, 0, z + 1], size);
+            dummy6.BecomeYDummyOf(yNeighbor.cubeVertices[resolution - 1, 0, z + 1], size);
+
+            cube[0] = cubeVertices[resolution - 1, resolution - 1, z];
+            cube[1] = dummy1;
+            cube[2] = dummy2;
+            cube[3] = cubeVertices[resolution - 1, resolution - 1, z + 1];
+            cube[4] = dummy3;
+            cube[5] = dummy4;
+            cube[6] = dummy5;
+            cube[7] = dummy6;
+
+            Triangulate(cube);
+        }
+    }
+
+    public void TriangulateAcrossXZ() {
+        for (int y = 0; y < resolution - 1; ++y) {
+            Vertex[] cube = new Vertex[8];
+            dummy1.BecomeXDummyOf(xNeighbor.cubeVertices[0, y, resolution - 1], size);
+            dummy2.BecomeXZDummyOf(xzNeighbor.cubeVertices[0, y, 0], size);
+            dummy3.BecomeZDummyOf(zNeighbor.cubeVertices[resolution - 1, y, 0], size);
+            dummy4.BecomeXDummyOf(xNeighbor.cubeVertices[0, y + 1, resolution - 1], size);
+            dummy5.BecomeXZDummyOf(xzNeighbor.cubeVertices[0, y + 1, 0], size);
+            dummy6.BecomeZDummyOf(zNeighbor.cubeVertices[resolution - 1, y + 1, 0], size);
+
+            cube[0] = cubeVertices[resolution - 1, y, resolution - 1];
+            cube[1] = dummy1;
+            cube[2] = dummy2;
+            cube[3] = dummy3;
+            cube[4] = cubeVertices[resolution - 1, y + 1, resolution - 1];
+            cube[5] = dummy4;
+            cube[6] = dummy5;
+            cube[7] = dummy6;
+
+            Triangulate(cube);
+        }
+    }
+
+    public void TriangulateAcrossXYZ() {
+        Vertex[] cube = new Vertex[8];
+        dummy1.BecomeXDummyOf(xNeighbor.cubeVertices[0, resolution - 1, resolution - 1], size);
+        dummy2.BecomeXZDummyOf(xzNeighbor.cubeVertices[0, resolution - 1, 0], size);
+        dummy3.BecomeZDummyOf(zNeighbor.cubeVertices[resolution - 1, resolution - 1, 0], size);
+        dummy4.BecomeYDummyOf(yNeighbor.cubeVertices[resolution - 1, 0, resolution - 1], size);
+        dummy5.BecomeXYDummyOf(xyNeighbor.cubeVertices[0, 0, resolution - 1], size);
+        dummy6.BecomeXYZDummyOf(xyzNeighbor.cubeVertices[0, 0, 0], size);
+        dummy7.BecomeZYDummyOf(zyNeighbor.cubeVertices[resolution - 1, 0, 0], size);
+
+        cube[0] = cubeVertices[resolution - 1, resolution - 1, resolution - 1];
+        cube[1] = dummy1;
+        cube[2] = dummy2;
+        cube[3] = dummy3;
+        cube[4] = dummy4;
+        cube[5] = dummy5;
+        cube[6] = dummy6;
+        cube[7] = dummy7;
+
+        Triangulate(cube);
     }
 
     private void UpdateCubeValues(int x, int y, int z, Vector3 point, int value) {
         Vertex[] cube = FindCube(x, y, z);
 
         for (int i = 0; i < 8; ++i) {
-            Vector3 p = new Vector3(cube[i].x - point.x, cube[i].y - point.y, cube[i].z - point.z);
+            Vector3 p = cube[i].position - point;
             if (p.x * p.x + p.y * p.y + p.z * p.z <= radiusIndex * radiusIndex) {
                 cube[i].SetValue(value);
             }
@@ -138,11 +331,10 @@ public class CubeGrid : MonoBehaviour {
             vertex.SetValue(0);
         }
         Refresh();
-        //Debug.Log(vertexX + ", " + vertexY + ", " + vertexZ);
+        Debug.Log(vertexX + ", " + vertexY + ", " + vertexZ);
     }
 
-    private void Triangulate(int x, int y, int z) {
-        Vertex[] cube = FindCube(x, y, z);
+    private void Triangulate(Vertex[] cube) {
         int index = DetermineTriangleIndex(cube);
         //Debug.Log(index);
         for (int i = 0; Tables.triangulation[index, i] != -1; i += 3) {
@@ -169,6 +361,8 @@ public class CubeGrid : MonoBehaviour {
             triIndex += 3;
         }
 
+
+
         mesh.vertices = vertices.ToArray();
         mesh.triangles = triangles.ToArray();
         meshc.sharedMesh = mesh;
@@ -176,11 +370,7 @@ public class CubeGrid : MonoBehaviour {
     }
 
     private Vector3 interpolateVertices(Vertex a, Vertex b) {
-        Vector3 point = new Vector3(
-            a.x + ((b.x - a.x) / 2),
-            a.y + ((b.y - a.y) / 2),
-            a.z + ((b.z - a.z) / 2)
-        );
+        Vector3 point = a.position + ((b.position - a.position) / 2);
 
         return point;
     }
@@ -233,17 +423,10 @@ public class CubeGrid : MonoBehaviour {
             o.transform.parent = transform;
             o.transform.localPosition = new Vector3(x * voxelSize, y * voxelSize, z * voxelSize);
             o.transform.localScale = Vector3.one * voxelSize * 0.1f;
-            if (y == 0) {
-                cubeVertices[x, y, z] = new Vertex(x * voxelSize, y * voxelSize, z * voxelSize, 0, o);
-            } else {
-                cubeVertices[x, y, z] = new Vertex(x * voxelSize, y * voxelSize, z * voxelSize, 0, o);
-            }
+            Debug.Log(o.transform.position);
+            cubeVertices[x, y, z] = new Vertex(x * voxelSize, y * voxelSize, z * voxelSize, 0, o);
         } else {
-            if (y == 0) {
-                cubeVertices[x, y, z] = new Vertex(x * voxelSize, y * voxelSize, z * voxelSize, 0);
-            } else {
-                cubeVertices[x, y, z] = new Vertex(x * voxelSize, y * voxelSize, z * voxelSize, 0);
-            }
+            cubeVertices[x, y, z] = new Vertex(x * voxelSize, y * voxelSize, z * voxelSize, 0);
         }
     }
 
