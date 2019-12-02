@@ -6,7 +6,6 @@ public class VertexCollision : MonoBehaviour {
 
 
     private void Update() {
-        Transform visualization = transform.parent.GetComponent<CubeGrid>().stencil;
         RaycastHit hitInfo;
         if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hitInfo) && hitInfo.collider.gameObject == gameObject) {
             if (Input.GetMouseButton(0)) {

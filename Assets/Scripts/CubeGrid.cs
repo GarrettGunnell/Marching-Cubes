@@ -6,7 +6,6 @@ using UnityEngine;
 public class CubeGrid : MonoBehaviour {
 
     public GameObject cubePrefab;
-    public Transform stencil;
     public int resolution;
     public float size;
     public bool isDemonstration;
@@ -14,19 +13,18 @@ public class CubeGrid : MonoBehaviour {
     public float isoLevel;
 
     private Mesh mesh;
-    private MeshCollider meshc;
     private List<int> triangles;
     private List<Vector3> vertices;
     public Vertex[, ,] cubeVertices;
     private Material[, ,] vertexMaterials;
     private Vertex dummy1, dummy2, dummy3, dummy4, dummy5, dummy6, dummy7;
-    private static string[] radiusNames = {"0", "1", "2", "3", "4", "5"};
-    private int radiusIndex = 3;
     private float voxelSize, halfSize;
     private int triIndex;
+    private bool interpolation;
 
-    public void Initialize(int resolution, float size, float isoLevel, int chunkX, int chunkY, int chunkZ) {
+    public void Initialize(int resolution, float size, float isoLevel, bool interpolation, int chunkX, int chunkY, int chunkZ) {
         this.resolution = resolution;
+        this.interpolation = interpolation;
         this.size = size;
         this.isoLevel = isoLevel;
         cubeVertices = new Vertex[resolution, resolution, resolution];
@@ -43,8 +41,6 @@ public class CubeGrid : MonoBehaviour {
             }
         }
         GetComponent<MeshFilter>().mesh = mesh = new Mesh();
-        stencil.gameObject.SetActive(false);
-        //meshc = gameObject.AddComponent<MeshCollider>();
         mesh.name = "Marching Mesh";
         vertices = new List<Vector3>();
         triangles = new List<int>();
@@ -58,64 +54,10 @@ public class CubeGrid : MonoBehaviour {
         dummy7 = new Vertex();
         //Refresh();
     }
-    /*
-    private void Update() {
-		RaycastHit hitInfo;
-		if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hitInfo) && hitInfo.collider.gameObject == gameObject) {
-            stencil.localScale = Vector3.one * radiusIndex;
-            stencil.localPosition = transform.TransformPoint(hitInfo.point);
-			stencil.gameObject.SetActive(true);
-            if (Input.GetMouseButtonDown(0)) {
-                Vector3 p = transform.TransformPoint(hitInfo.point);
-                UpdateMesh(p, -1);
-            } else if (Input.GetMouseButtonDown(1)) {
-                Vector3 p = transform.TransformPoint(hitInfo.point);
-                UpdateMesh(p, 0);
-            }
-		}
-		else {
-			stencil.gameObject.SetActive(false);
-		}
-    }
 
-    private void OnGUI() {
-        GUILayout.BeginArea(new Rect(4f, 4f, 150f, 500f));
-        GUILayout.Label("Radius");
-        radiusIndex = GUILayout.SelectionGrid(radiusIndex, radiusNames, 6);
-        GUILayout.EndArea();
-    }
-    */
-    public void EditVertices(Vector3 point, int value) {
-        for (int x = 0; x < resolution; ++x) {
-            for (int y = 0; y < resolution; ++y) {
-                for (int z = 0; z < resolution; ++z) {
-                    Vector3 p = cubeVertices[x, y, z].position - point;
-                    if (p.x * p.x + p.y * p.y + p.z * p.z <= radiusIndex * radiusIndex) {
-                        cubeVertices[x, y, z].SetValue(value);
-                    }
-                }
-            }
-        }
-        Refresh();
-    }
-
-    private void UpdateMesh(Vector3 point, int value) {
-        vertices.Clear();
-        triangles.Clear();
-        mesh.Clear();
-        triIndex = 0;
-        for (int x = 0; x < resolution - 1; ++x) {
-            for (int y = 0; y < resolution - 1; ++y) {
-                for (int z = 0; z < resolution - 1; ++z) {
-                    UpdateCubeValues(x, y, z, point, value);
-                    //Triangulate(x, y, z);
-                }
-            }
-        }
-    }
-
-    public void updateIsoLevel(float isoLevel) {
+    public void updateValues(float isoLevel, bool interpolation) {
         this.isoLevel = isoLevel;
+        this.interpolation = interpolation;
         Refresh();
     }
 
@@ -316,17 +258,6 @@ public class CubeGrid : MonoBehaviour {
         Triangulate(cube);
     }
 
-    private void UpdateCubeValues(int x, int y, int z, Vector3 point, int value) {
-        Vertex[] cube = FindCube(x, y, z);
-
-        for (int i = 0; i < 8; ++i) {
-            Vector3 p = cube[i].position - point;
-            if (p.x * p.x + p.y * p.y + p.z * p.z <= radiusIndex * radiusIndex) {
-                cube[i].SetValue(value);
-            }
-        }
-    }
-
     public void EditVertex(Vector3 point, bool state) {
         int vertexX = (int)(point.x / voxelSize);
         int vertexY = (int)(point.y / voxelSize);
@@ -372,13 +303,17 @@ public class CubeGrid : MonoBehaviour {
 
         mesh.vertices = vertices.ToArray();
         mesh.triangles = triangles.ToArray();
-        //meshc.sharedMesh = mesh;
         mesh.RecalculateNormals();
     }
 
     private Vector3 interpolateVertices(Vertex a, Vertex b) {
-        float t = (isoLevel - a.GetValue()) / (b.GetValue() - a.GetValue());
-        Vector3 point = a.position + t * (b.position - a.position);
+        Vector3 point;
+        if (interpolation) {
+            float t = (isoLevel - a.GetValue()) / (b.GetValue() - a.GetValue());
+             point = a.position + t * (b.position - a.position);
+        } else {
+             point = a.position + ((b.position - a.position) / 2);
+        }
 
         return point;
     }

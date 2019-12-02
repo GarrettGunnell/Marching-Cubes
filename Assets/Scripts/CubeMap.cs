@@ -12,6 +12,7 @@ public class CubeMap : MonoBehaviour {
     public CubeGrid cubeGridPrefab;
 
     public bool refresh = false;
+    public bool interpolation = false;
     private bool oldRefresh;
     public float isoLevel = 1;
 
@@ -43,12 +44,11 @@ public class CubeMap : MonoBehaviour {
     }
 
     private void Update() {
-        if (refresh != oldRefresh) {
-            oldRefresh = refresh;
+        if (refresh) {
             for (int x = 0; x < chunkResolution; ++x) {
                 for (int y = 0; y < chunkResolution; ++y) {
                     for (int z = 0; z < chunkResolution; ++z) {
-                        chunks[x, y, z].updateIsoLevel(isoLevel);
+                        chunks[x, y, z].updateValues(isoLevel, interpolation);
                     }
                 }
             }
@@ -95,7 +95,7 @@ public class CubeMap : MonoBehaviour {
 
     private void CreateChunk(int x, int y, int z) {
         CubeGrid chunk = Instantiate(cubeGridPrefab) as CubeGrid;
-        chunk.Initialize(resolution, chunkSize, isoLevel, x, y, z);
+        chunk.Initialize(resolution, chunkSize, isoLevel, interpolation, x, y, z);
         chunk.transform.parent = transform;
         chunk.transform.localPosition = new Vector3(x * chunkSize, y * chunkSize, z * chunkSize);
         if (x > 0) {

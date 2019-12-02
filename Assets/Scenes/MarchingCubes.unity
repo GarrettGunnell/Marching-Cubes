@@ -149,12 +149,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d54897859018246478fda4f289fbe70a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  size: 8
+  size: 16
   resolution: 4
   chunkResolution: 8
   cubeGridPrefab: {fileID: 2724278154925693003, guid: c33df807da556e84cac80f7d1cb84499,
     type: 3}
   refresh: 0
+  interpolation: 1
   isoLevel: 3
 --- !u!4 &509883837
 Transform:
