@@ -13,11 +13,15 @@ public class CubeMap : MonoBehaviour {
 
     public bool refresh = false;
     public bool interpolation = false;
+    public bool regenerate = false;
     private bool oldRefresh;
     public float isoLevel = 1;
+    public float noiseWeight = 5;
 
+    public float[,] heightMap;
 
     private CubeGrid[, ,] chunks;
+    private HeightMapGenerator heightMapGenerator;
     private float chunkSize, cubeSize, halfSize;
 
     private void Awake() {
@@ -25,6 +29,8 @@ public class CubeMap : MonoBehaviour {
         chunkSize = size / chunkResolution;
         cubeSize = chunkSize / resolution;
         oldRefresh = refresh;
+        heightMapGenerator = gameObject.GetComponent<HeightMapGenerator>();
+        heightMap = heightMapGenerator.Generate(resolution, chunkResolution);
 
         chunks = new CubeGrid[chunkResolution, chunkResolution, chunkResolution];
         for (int x = 0; x < chunkResolution; ++x) {
@@ -44,11 +50,21 @@ public class CubeMap : MonoBehaviour {
     }
 
     private void Update() {
-        if (refresh) {
+        if (regenerate) {
+            heightMap = heightMapGenerator.Generate(resolution, chunkResolution);
+        }
+        if (Input.GetMouseButtonDown(1) && refresh) {
             for (int x = 0; x < chunkResolution; ++x) {
                 for (int y = 0; y < chunkResolution; ++y) {
                     for (int z = 0; z < chunkResolution; ++z) {
-                        chunks[x, y, z].updateValues(isoLevel, interpolation);
+                        chunks[x, y, z].updateValues(isoLevel, noiseWeight, interpolation, regenerate);
+                    }
+                }
+            }
+            for (int x = 0; x < chunkResolution; ++x) {
+                for (int y = 0; y < chunkResolution; ++y) {
+                    for (int z = 0; z < chunkResolution; ++z) {
+                        chunks[x, y, z].Refresh();
                     }
                 }
             }
@@ -62,12 +78,13 @@ public class CubeMap : MonoBehaviour {
         int chunkX = vertexX / resolution;
         int chunkY = vertexY / resolution;
         int chunkZ = vertexZ / resolution;
+
         vertexX -= chunkX * resolution;
         vertexY -= chunkY * resolution;
         vertexZ -= chunkZ * resolution;
         Vertex vertex = chunks[chunkX, chunkY, chunkZ].cubeVertices[vertexX, vertexY, vertexZ];
-        Debug.Log(vertex.GetValue());
-        vertex.SetValue(value);
+        Debug.Log(vertex.globalPosition);
+        //vertex.SetValue(value);
         if (chunkX > 0) {
             chunks[chunkX - 1, chunkY, chunkZ].Refresh();
         }
@@ -95,7 +112,7 @@ public class CubeMap : MonoBehaviour {
 
     private void CreateChunk(int x, int y, int z) {
         CubeGrid chunk = Instantiate(cubeGridPrefab) as CubeGrid;
-        chunk.Initialize(resolution, chunkSize, isoLevel, interpolation, x, y, z);
+        chunk.Initialize(resolution, chunkSize, isoLevel, interpolation, x, y, z, heightMap, noiseWeight);
         chunk.transform.parent = transform;
         chunk.transform.localPosition = new Vector3(x * chunkSize, y * chunkSize, z * chunkSize);
         if (x > 0) {

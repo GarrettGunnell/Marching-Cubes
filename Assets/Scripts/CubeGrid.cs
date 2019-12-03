@@ -20,13 +20,15 @@ public class CubeGrid : MonoBehaviour {
     private Vertex dummy1, dummy2, dummy3, dummy4, dummy5, dummy6, dummy7;
     private float voxelSize, halfSize;
     private int triIndex;
+    private float[,] heightMap;
     private bool interpolation;
 
-    public void Initialize(int resolution, float size, float isoLevel, bool interpolation, int chunkX, int chunkY, int chunkZ) {
+    public void Initialize(int resolution, float size, float isoLevel, bool interpolation, int chunkX, int chunkY, int chunkZ, float[,] heightMap, float noiseWeight) {
         this.resolution = resolution;
         this.interpolation = interpolation;
         this.size = size;
         this.isoLevel = isoLevel;
+        this.heightMap = heightMap;
         cubeVertices = new Vertex[resolution, resolution, resolution];
         vertexMaterials = new Material[resolution, resolution, resolution];
         voxelSize = size / resolution;
@@ -36,7 +38,7 @@ public class CubeGrid : MonoBehaviour {
             for (int y = 0; y < resolution; ++y) {
                 for (int z = 0; z < resolution; ++z) {
                     //Debug.Log(x + ", " + y + ", " + z);
-                    CreateVertex(x, y, z, chunkX, chunkY, chunkZ);
+                    CreateVertex(x, y, z, chunkX, chunkY, chunkZ, noiseWeight);
                 }
             }
         }
@@ -55,10 +57,19 @@ public class CubeGrid : MonoBehaviour {
         //Refresh();
     }
 
-    public void updateValues(float isoLevel, bool interpolation) {
+    public void updateValues(float isoLevel, float noiseWeight, bool interpolation, bool regenerate) {
         this.isoLevel = isoLevel;
         this.interpolation = interpolation;
-        Refresh();
+        if (regenerate) {
+            heightMap = transform.parent.GetComponent<CubeMap>().heightMap;
+            for (int x = 0; x < resolution; ++x) {
+                for (int y = 0; y < resolution; ++y) {
+                    for (int z = 0; z < resolution; ++z) {
+                        cubeVertices[x, y, z].SetValue(heightMap, noiseWeight);
+                    }
+                }
+            }
+        }
     }
 
     public void Refresh() {
@@ -264,9 +275,9 @@ public class CubeGrid : MonoBehaviour {
         int vertexZ = (int)(point.z / voxelSize);
         Vertex vertex = cubeVertices[vertexX, vertexY, vertexZ];
         if (state) {
-            vertex.SetValue(-1);
+            //vertex.SetValue(-1);
         } else {
-            vertex.SetValue(0);
+            //vertex.SetValue(0);
         }
         Refresh();
         //Debug.Log(vertexX + ", " + vertexY + ", " + vertexZ);
@@ -320,14 +331,14 @@ public class CubeGrid : MonoBehaviour {
 
     private int DetermineTriangleIndex(Vertex[] cube) {
         int index = 0;
-        if (cube[0].GetValue() < isoLevel) index |= 1;
-        if (cube[1].GetValue() < isoLevel) index |= 2;
-        if (cube[2].GetValue() < isoLevel) index |= 4;
-        if (cube[3].GetValue() < isoLevel) index |= 8;
-        if (cube[4].GetValue() < isoLevel) index |= 16;
-        if (cube[5].GetValue() < isoLevel) index |= 32;
-        if (cube[6].GetValue() < isoLevel) index |= 64;
-        if (cube[7].GetValue() < isoLevel) index |= 128;
+        if (cube[0].GetValue() > isoLevel) index |= 1;
+        if (cube[1].GetValue() > isoLevel) index |= 2;
+        if (cube[2].GetValue() > isoLevel) index |= 4;
+        if (cube[3].GetValue() > isoLevel) index |= 8;
+        if (cube[4].GetValue() > isoLevel) index |= 16;
+        if (cube[5].GetValue() > isoLevel) index |= 32;
+        if (cube[6].GetValue() > isoLevel) index |= 64;
+        if (cube[7].GetValue() > isoLevel) index |= 128;
         return index;
     }
 
@@ -359,7 +370,7 @@ public class CubeGrid : MonoBehaviour {
         return cube;
     }
 
-    private void CreateVertex(int x, int y, int z, int chunkX, int chunkY, int chunkZ) {
+    private void CreateVertex(int x, int y, int z, int chunkX, int chunkY, int chunkZ, float noiseWeight) {
         if (isDemonstration) {
             GameObject o = Instantiate(cubePrefab) as GameObject;
             SphereCollider ob = o.AddComponent<SphereCollider>();
@@ -367,9 +378,9 @@ public class CubeGrid : MonoBehaviour {
             o.transform.localPosition = new Vector3(x * voxelSize, y * voxelSize, z * voxelSize);
             o.transform.localScale = Vector3.one * voxelSize * 0.1f;
             //Debug.Log(o.transform.position);
-            cubeVertices[x, y, z] = new Vertex(x * voxelSize, y * voxelSize, z * voxelSize, chunkX, chunkY, chunkZ, size, o);
+            cubeVertices[x, y, z] = new Vertex(x * voxelSize, y * voxelSize, z * voxelSize, o);
         } else {
-            cubeVertices[x, y, z] = new Vertex(x * voxelSize, y * voxelSize, z * voxelSize, chunkX, chunkY, chunkZ, size);
+            cubeVertices[x, y, z] = new Vertex(x * voxelSize, y * voxelSize, z * voxelSize, chunkX, chunkY, chunkZ, size, voxelSize, resolution, heightMap, noiseWeight);
         }
     }
 
