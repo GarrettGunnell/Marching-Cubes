@@ -10,7 +10,7 @@ TO DO:
 
 ![Example Generated Terrain](https://puu.sh/ELWwE.png)
 
-References:
+References:<br/>
 Height Map Generator adapted from: https://github.com/SebLague/Hydraulic-Erosion
 
 https://www.youtube.com/watch?v=M3iI2l0ltbE
