@@ -14,9 +14,13 @@ public class CubeMap : MonoBehaviour {
     public bool refresh = false;
     public bool interpolation = false;
     public bool regenerate = false;
+    public bool terracing = false;
+    public bool slicing = false;
+    public bool groundplane = false;
     private bool oldRefresh;
     public float isoLevel = 1;
     public float noiseWeight = 5;
+    public int terraceHeight = 2;
 
     public float[,] heightMap;
 
@@ -83,8 +87,7 @@ public class CubeMap : MonoBehaviour {
         vertexY -= chunkY * resolution;
         vertexZ -= chunkZ * resolution;
         Vertex vertex = chunks[chunkX, chunkY, chunkZ].cubeVertices[vertexX, vertexY, vertexZ];
-        Debug.Log(vertex.globalPosition);
-        //vertex.SetValue(value);
+        vertex.SetValue(value);
         if (chunkX > 0) {
             chunks[chunkX - 1, chunkY, chunkZ].Refresh();
         }

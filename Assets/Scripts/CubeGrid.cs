@@ -359,7 +359,7 @@ public class CubeGrid : MonoBehaviour {
             for (int i = 0; i < 8; ++i) {
                 float vertexValue = cube[i].GetValue();
 
-                if (vertexValue < isoLevel) {
+                if (vertexValue > isoLevel) {
                     cube[i].SetColor(Color.white);
                 } else {
                     cube[i].SetColor(Color.black);

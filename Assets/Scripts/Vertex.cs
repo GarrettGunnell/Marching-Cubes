@@ -8,6 +8,7 @@ public class Vertex {
     public Vector3 position;
     public Material material;
     public Vector3 globalPosition;
+    private int otherGlobalY;
 
 
     public Vertex() {}
@@ -16,12 +17,24 @@ public class Vertex {
         int globalX = (int)(x / voxelSize);
         int globalY = (int)(y / voxelSize);
         int globalZ = (int)(z / voxelSize);
+        this.otherGlobalY = globalY;
 
         globalX += chunkX * resolution;
         globalY += chunkY * resolution;
         globalZ += chunkZ * resolution;
         globalPosition = new Vector3(globalX, globalY, globalZ);
         this.value = -globalPosition.y + heightMap[(int)globalPosition.z, (int)globalPosition.x] * noiseWeight;
+        if (globalPosition.y == 0 && GameObject.Find("Cube Map").GetComponent<CubeMap>().groundplane) {
+            this.value = GameObject.Find("Cube Map").GetComponent<CubeMap>().isoLevel + 1;
+        }
+        if (GameObject.Find("Cube Map").GetComponent<CubeMap>().terracing) {
+            this.value += globalPosition.y % GameObject.Find("Cube Map").GetComponent<CubeMap>().terraceHeight;
+        }
+        if (GameObject.Find("Cube Map").GetComponent<CubeMap>().slicing) {
+            if (otherGlobalY == 0) {
+                this.value = -100;
+            }
+        }
         this.position = new Vector3(x, y, z);
     }
 
@@ -85,6 +98,21 @@ public class Vertex {
 
     public void SetValue(float [,] heightMap, float noiseWeight) {
         this.value = -globalPosition.y + heightMap[(int)globalPosition.z, (int)globalPosition.x] * noiseWeight;
+        if (globalPosition.y == 0 && GameObject.Find("Cube Map").GetComponent<CubeMap>().groundplane) {
+            this.value = GameObject.Find("Cube Map").GetComponent<CubeMap>().isoLevel + 1;
+        }
+        if (GameObject.Find("Cube Map").GetComponent<CubeMap>().terracing) {
+            this.value += globalPosition.y % GameObject.Find("Cube Map").GetComponent<CubeMap>().terraceHeight;
+        }
+        if (GameObject.Find("Cube Map").GetComponent<CubeMap>().slicing) {
+            if (otherGlobalY == 0) {
+                this.value -= 100;
+            }
+        }
+    }
+
+    public void SetValue(int value) {
+        this.value = value;
     }
 
     public float GetValue() {
