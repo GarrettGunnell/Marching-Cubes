@@ -13,6 +13,6 @@ TO DO:
 References:<br/>
 Height Map Generator adapted from: https://github.com/SebLague/Hydraulic-Erosion
 
-https://www.youtube.com/watch?v=M3iI2l0ltbE
-http://paulbourke.net/geometry/polygonise/
-https://catlikecoding.com/unity/tutorials/marching-squares/
+https://www.youtube.com/watch?v=M3iI2l0ltbE<br/>
+http://paulbourke.net/geometry/polygonise/<br/>
+https://catlikecoding.com/unity/tutorials/marching-squares/<br/>

@@ -151,7 +151,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   size: 20
-  resolution: 10
+  resolution: 8
   chunkResolution: 8
   cubeGridPrefab: {fileID: 2724278154925693003, guid: c33df807da556e84cac80f7d1cb84499,
     type: 3}
